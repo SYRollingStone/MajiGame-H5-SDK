@@ -82,21 +82,26 @@ try {
   // ignored
 }
 
-// 5. Bump package.json
+// 5. Bump package.json (skip if already at target version)
 const pkgPath = resolve(repoRoot, 'package.json')
 const raw = readFileSync(pkgPath, 'utf-8')
 const pkg = JSON.parse(raw)
 const oldVersion = pkg.version
-pkg.version = version
+const needsBump = oldVersion !== version
 
-// preserve trailing newline if present
-const trailingNl = raw.endsWith('\n') ? '\n' : ''
-writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + trailingNl)
-console.log(`\n✓ Bumped package.json: ${oldVersion} → ${version}`)
+if (needsBump) {
+  pkg.version = version
+  const trailingNl = raw.endsWith('\n') ? '\n' : ''
+  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + trailingNl)
+  console.log(`\n✓ Bumped package.json: ${oldVersion} → ${version}`)
 
-// 6. Commit + tag + push
-sh('git add package.json')
-sh(`git commit -m "release: v${version}"`)
+  sh('git add package.json')
+  sh(`git commit -m "release: v${version}"`)
+} else {
+  console.log(`\n✓ package.json already at ${version}, skipping bump`)
+}
+
+// 6. Tag + push
 sh(`git tag ${tag}`)
 sh(`git push origin main ${tag}`)
 
