@@ -114,40 +114,13 @@ npm run serve
 
 ## 发版流程
 
-每次发版只需要在本地跑一条命令：
-
 ```bash
 npm run release -- 0.2.0
 ```
 
-脚本会自动：
-1. 校验工作区干净 + 在 main 分支
-2. 把 `package.json` 的 `version` 字段改为 `0.2.0`
-3. 提交 `release: v0.2.0`
-4. 打 tag `v0.2.0-src` 并推送
+剩下交给 [GitHub Actions](.github/workflows/release.yml)：自动 build → 推 release 分支 → 打 tag → 创建 GitHub Release。1~2 分钟后 jsDelivr `@v0.2.0` 即可用。
 
-之后剩下交给 [GitHub Actions](.github/workflows/release.yml)：
-1. 监听到 `v*-src` tag 推送
-2. `npm ci && npm run type-check && npm run build`
-3. 切到 `release` 孤儿分支（不存在则创建）
-4. 替换内容为 `dist/*`
-5. 在 release 分支上打 `v0.2.0` tag（无后缀）
-6. 创建 GitHub Release，含 CDN URL 和自动生成的 changelog
-
-完成后约 1~2 分钟内 jsDelivr 即可访问 `@v0.2.0` 资源。
-
-### 演练（dry-run）
-
-去 GitHub 仓库 **Actions → Release → Run workflow**，勾选 `dry_run: true`，会跑完构建但不推送任何东西。用于发版前预演。
-
-### 双 tag 命名说明
-
-| Tag | 在哪个分支 | 指向什么 |
-|---|---|---|
-| `v0.2.0-src` | `main` | 发版时的源码 commit |
-| `v0.2.0` | `release` | 该版本构建产物的 commit |
-
-两个 tag 互不冲突，jsDelivr 用 `v0.2.0`（无后缀）拉取产物。
+**详细 SOP、常见错误处理、紧急情况见 → [RELEASING.md](./RELEASING.md)**
 
 ---
 

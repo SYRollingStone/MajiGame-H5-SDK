@@ -15,6 +15,7 @@ npm run build       # Vite lib build → dist/maji-sdk.min.js (UMD) + maji-sdk.j
 npm run build:nomin # Same but skips obfuscation (for debugging the build output)
 npm run type-check  # tsc --noEmit
 npm run serve       # http-server on :5173 serving the repo root
+npm run release -- <version>  # Release pipeline — see RELEASING.md before using
 ```
 
 There is no test suite. Verification is manual via the two HTML pages served by `npm run serve`:
@@ -22,6 +23,10 @@ There is no test suite. Verification is manual via the two HTML pages served by 
 - `http://localhost:5173/test-consumer/index.html` — simulates a third-party game integrating via `<script src>`
 
 The test-consumer page is the **full-chain validation**: build → CDN-style script include → API call → feature works. Don't treat it as an example; treat it as the integration test.
+
+## Releasing
+
+The release process is **automated via GitHub Actions** (push tag `v*-src` → builds → pushes to `release` branch → creates `vX.Y.Z` tag → publishes GitHub Release → jsDelivr serves `@vX.Y.Z`). **Read [RELEASING.md](RELEASING.md) for the full SOP** before touching anything release-related — it covers the double-tag scheme, dry-run, error recovery, and jsDelivr cache semantics. Don't improvise release steps.
 
 ## Architecture
 
