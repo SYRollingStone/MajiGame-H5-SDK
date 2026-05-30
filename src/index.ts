@@ -4,7 +4,7 @@ import { EventBus } from './core/event-bus'
 import { startSecurity, type SecurityHandle } from './modules/security'
 import type { MajiSDKOptions } from './types'
 
-export const VERSION = '0.1.0'
+export const VERSION = __VERSION__
 
 let initialized = false
 let securityHandle: SecurityHandle | null = null

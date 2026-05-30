@@ -22,7 +22,8 @@
     "build:nomin": "vite build --mode nomin",
     "type-check": "tsc --noEmit",
     "serve": "http-server -p 5173 -c-1 --cors .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "release": "node scripts/release.mjs"
   },
   "keywords": [
     "h5",

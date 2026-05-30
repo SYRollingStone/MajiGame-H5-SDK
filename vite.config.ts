@@ -1,13 +1,19 @@
 import { defineConfig } from 'vite'
 import obfuscatorPkg from 'rollup-plugin-obfuscator'
 import { resolve } from 'path'
+import { readFileSync } from 'node:fs'
 
 const obfuscator = (obfuscatorPkg as unknown as { default: typeof obfuscatorPkg }).default ?? obfuscatorPkg
+
+const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8')) as { version: string }
 
 export default defineConfig(({ mode }) => {
   const isMin = mode !== 'nomin'
 
   return {
+    define: {
+      __VERSION__: JSON.stringify(pkg.version),
+    },
     build: {
       lib: {
         entry: resolve(__dirname, 'src/index.ts'),

@@ -1,0 +1,207 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*-src'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 0.1.0). Empty = use package.json version.'
+        required: false
+      dry_run:
+        description: 'Build only, do not push to release branch or create Release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Resolve version
+        id: ver
+        run: |
+          set -e
+          if [ "${{ github.event_name }}" = "push" ]; then
+            TAG_REF="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG_REF%-src}"
+            VERSION="${VERSION#v}"
+          else
+            VERSION="${{ inputs.version }}"
+            if [ -z "$VERSION" ]; then
+              VERSION=$(node -p "require('./package.json').version")
+            fi
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "::error::Cannot resolve version"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "src_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "src_short_sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $VERSION"
+
+      - name: Sync package.json version (manual dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf-8'));
+            pkg.version = '${{ steps.ver.outputs.version }}';
+            fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          echo "package.json version set to ${{ steps.ver.outputs.version }}"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build
+
+      - name: List build artifacts
+        run: |
+          echo "=== dist/ contents ==="
+          ls -lah dist/
+          echo ""
+          echo "=== First line of maji-sdk.min.js (UMD header) ==="
+          head -c 200 dist/maji-sdk.min.js
+
+      - name: Stash artifacts
+        run: |
+          rm -rf /tmp/release-stash
+          mkdir -p /tmp/release-stash
+          cp -r dist/* /tmp/release-stash/
+
+      - name: Generate release branch README
+        run: |
+          cat > /tmp/release-stash/README.md << EOF
+          # MajiGame H5 SDK — Build Artifacts
+
+          This is the **release branch**. It contains only built artifacts.
+          For source code, switch to the \`main\` branch.
+
+          ## This release
+
+          - **Version**: \`${{ steps.ver.outputs.tag }}\`
+          - **Source commit**: [\`${{ steps.ver.outputs.src_short_sha }}\`](https://github.com/${{ github.repository }}/commit/${{ steps.ver.outputs.src_sha }})
+          - **Source tag**: \`${{ steps.ver.outputs.tag }}-src\`
+          - **Built at**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          ## CDN Usage
+
+          \`\`\`html
+          <script src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ steps.ver.outputs.tag }}/maji-sdk.min.js"></script>
+          \`\`\`
+
+          See \`main\` branch for full documentation.
+          EOF
+
+      - name: Dry-run summary
+        if: inputs.dry_run == true
+        run: |
+          echo "═══════════════════════════════════════════"
+          echo "  DRY RUN — nothing will be pushed"
+          echo "═══════════════════════════════════════════"
+          echo "  Version: ${{ steps.ver.outputs.tag }}"
+          echo "  Source: ${{ steps.ver.outputs.src_sha }}"
+          echo "  Files to publish:"
+          ls -lah /tmp/release-stash/
+
+      - name: Publish to release branch
+        if: inputs.dry_run != true
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Check tag doesn't already exist
+          if git ls-remote --exit-code --tags origin "${{ steps.ver.outputs.tag }}" > /dev/null 2>&1; then
+            echo "::error::Tag ${{ steps.ver.outputs.tag }} already exists on remote. Refusing to overwrite."
+            exit 1
+          fi
+
+          # Switch to (or create) release branch
+          if git ls-remote --exit-code --heads origin release > /dev/null 2>&1; then
+            echo "Found existing release branch — fetching"
+            git fetch origin release
+            git checkout -B release origin/release
+          else
+            echo "Creating new orphan release branch"
+            git checkout --orphan release
+          fi
+
+          # Clean working tree completely
+          git rm -rf . 2>/dev/null || true
+          git clean -fdx -e node_modules -e dist
+
+          # Copy artifacts in
+          cp -r /tmp/release-stash/* .
+
+          # Commit + tag + push
+          git add -A
+          git status --short
+          git commit -m "release: ${{ steps.ver.outputs.tag }} [src: ${{ steps.ver.outputs.src_short_sha }}]"
+          git tag "${{ steps.ver.outputs.tag }}"
+          git push origin release
+          git push origin "${{ steps.ver.outputs.tag }}"
+
+      - name: Create GitHub Release
+        if: inputs.dry_run != true
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.ver.outputs.tag }}
+          name: ${{ steps.ver.outputs.tag }}
+          generate_release_notes: true
+          body: |
+            ## 📦 CDN URLs
+
+            **Locked version (recommended for production):**
+            ```html
+            <script src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ steps.ver.outputs.tag }}/maji-sdk.min.js"></script>
+            ```
+
+            **Track minor (auto-updates within minor):**
+            ```html
+            <script src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@v${{ steps.ver.outputs.version }}/maji-sdk.min.js"></script>
+            ```
+
+            **Always latest (not recommended for production):**
+            ```html
+            <script src="https://cdn.jsdelivr.net/gh/${{ github.repository }}@release/maji-sdk.min.js"></script>
+            ```
+
+            ## 🔗 Source
+
+            - Source commit: [`${{ steps.ver.outputs.src_short_sha }}`](https://github.com/${{ github.repository }}/commit/${{ steps.ver.outputs.src_sha }})
+            - Source tag: `${{ steps.ver.outputs.tag }}-src`
+            - Build artifacts: [`release` branch](https://github.com/${{ github.repository }}/tree/${{ steps.ver.outputs.tag }})
+
+      - name: Summary
+        if: inputs.dry_run != true
+        run: |
+          echo "### ✅ Released ${{ steps.ver.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**CDN URL:**" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "https://cdn.jsdelivr.net/gh/${{ github.repository }}@${{ steps.ver.outputs.tag }}/maji-sdk.min.js" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Source commit: \`${{ steps.ver.outputs.src_short_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
