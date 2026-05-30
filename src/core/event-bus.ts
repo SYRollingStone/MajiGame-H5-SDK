@@ -1,0 +1,35 @@
+type Listener = (...args: unknown[]) => void
+
+export class EventBus {
+  private map = new Map<string, Set<Listener>>()
+
+  on(event: string, fn: Listener): () => void {
+    let set = this.map.get(event)
+    if (!set) {
+      set = new Set()
+      this.map.set(event, set)
+    }
+    set.add(fn)
+    return () => this.off(event, fn)
+  }
+
+  off(event: string, fn: Listener): void {
+    this.map.get(event)?.delete(fn)
+  }
+
+  emit(event: string, ...args: unknown[]): void {
+    const set = this.map.get(event)
+    if (!set) return
+    for (const fn of set) {
+      try {
+        fn(...args)
+      } catch (_) {
+        // swallow listener errors
+      }
+    }
+  }
+
+  clear(): void {
+    this.map.clear()
+  }
+}

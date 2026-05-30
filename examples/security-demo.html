@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MajiSDK Security Demo（SDK 仓库自测）</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        margin: 0;
+        padding: 40px 20px;
+        background: linear-gradient(135deg, #1e3a8a, #6b21a8);
+        color: #fff;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+      .container {
+        max-width: 720px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(8px);
+        border-radius: 14px;
+        padding: 30px;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      }
+      h1 {
+        margin-top: 0;
+        font-size: 24px;
+      }
+      .badge {
+        display: inline-block;
+        background: #22c55e;
+        color: #fff;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
+      .info {
+        background: rgba(0, 0, 0, 0.25);
+        padding: 14px 18px;
+        border-radius: 8px;
+        margin: 16px 0;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.8;
+      }
+      ul {
+        line-height: 1.9;
+        padding-left: 20px;
+      }
+      code {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 13px;
+      }
+      input {
+        padding: 8px 12px;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        font-size: 14px;
+        margin-top: 6px;
+        width: 280px;
+      }
+      .small {
+        font-size: 13px;
+        opacity: 0.8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>MajiSDK 安全模块自测 <span class="badge">SDK 仓库内 demo</span></h1>
+
+      <div class="info" id="status">SDK 初始化中…</div>
+
+      <h3>请依次尝试以下操作验证功能：</h3>
+      <ul>
+        <li>按 <code>F12</code>、<code>Ctrl+Shift+I</code> → 应被快捷键拦截，且打开 DevTools 后会触发遮罩 + 调试器卡死</li>
+        <li>右键点击页面 → 应弹不出菜单</li>
+        <li>按 <code>Ctrl+U</code>、<code>Ctrl+S</code> → 应被拦截</li>
+        <li>关闭 DevTools → 遮罩自动消失，游戏恢复</li>
+        <li>下面的输入框可以正常右键 / 选中（白名单 selector）：</li>
+      </ul>
+      <input type="text" placeholder="输入框：允许右键和文本操作" />
+
+      <p class="small">
+        当前页面通过相对路径加载 SDK：<code>../dist/maji-sdk.min.js</code>。<br />
+        如果你想模拟"第三方游戏接入"场景，请运行同目录下的
+        <code>test-consumer/index.html</code>。
+      </p>
+    </div>
+
+    <script src="../dist/maji-sdk.min.js"></script>
+    <script>
+      MajiSDK.init({
+        gameId: 'sdk-internal-demo',
+        debug: true,
+        security: {
+          antiDebug: {
+            enabled: true,
+            onDetect: 'freeze+tip',
+            tipText: '检测到您打开了开发者工具，请关闭后继续游戏',
+            tipTitle: '安全提示',
+            interval: 1500,
+            autoRecover: true
+          },
+          shortcuts: {
+            enabled: true,
+            blockContextMenu: true,
+            blockKeys: true,
+            blockSelection: false,
+            allowSelector: 'input, textarea, [contenteditable="true"]'
+          },
+          domainLock: {
+            enabled: false
+          }
+        }
+      })
+
+      document.getElementById('status').textContent =
+        'SDK 版本: ' + MajiSDK.VERSION + ' | isReady=' + MajiSDK.isReady()
+    </script>
+  </body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "name": "@majigame/h5-sdk",
+  "version": "0.1.0",
+  "description": "MajiGame H5 SDK - 自营 H5 小游戏站 SDK",
+  "type": "module",
+  "main": "./dist/maji-sdk.umd.cjs",
+  "module": "./dist/maji-sdk.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/maji-sdk.js",
+      "require": "./dist/maji-sdk.umd.cjs"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc --emitDeclarationOnly --declaration --outDir dist",
+    "build:nomin": "vite build --mode nomin",
+    "type-check": "tsc --noEmit",
+    "serve": "http-server -p 5173 -c-1 --cors .",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "h5",
+    "game",
+    "sdk",
+    "majigame",
+    "anti-debug",
+    "security"
+  ],
+  "author": "MajiGame",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1",
+    "javascript-obfuscator": "^4.1.1",
+    "rollup-plugin-obfuscator": "^1.1.0",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10"
+  }
+}
