@@ -64,6 +64,23 @@ Both `detectors.ts` and `manager.ts` independently define `TRAP = new Function('
 ### Public API surface (`src/index.ts`)
 Both named exports and a `default` export object are provided. UMD consumers access named exports directly on the `MajiSDK` global. The bundle exposes: `VERSION`, `init`, `destroy`, `isReady`, `isDetected`, `on`, `off`. **`init` is single-shot** — second calls are logged and ignored. Call `destroy()` first if you need to re-init with new config.
 
+## Public-API documentation discipline
+
+[INTEGRATION.md](INTEGRATION.md) is the **single source of truth for SDK consumers** (other game projects and the AI agents helping them integrate). It documents every public API, config option, event, default value, and limitation.
+
+**You MUST keep INTEGRATION.md in sync** when changes touch any of:
+- Anything exported from `src/index.ts` (added/removed/renamed methods or properties on the `MajiSDK` global)
+- Any field in `*Options` interfaces in `src/types.ts` (added/removed/renamed/changed defaults or allowed values)
+- Any event emitted via the event bus (new `'ready'`-style event names, payload shape)
+- A module's implementation status (the 实现状态 table in §3 — when a phase moves from ⏳ to ✅)
+- Newly discovered browser/CSP/runtime constraints
+
+Internal refactors, bug fixes, and perf changes that don't alter the public surface do **not** require doc updates.
+
+INTEGRATION.md has a `文档维护规则` section at the bottom restating these rules for human readers — keep that section accurate too.
+
+**Conflict resolution**: when INTEGRATION.md disagrees with code, code wins — update the doc immediately.
+
 ## Conventions
 
 - **TypeScript strict mode** is on. The `Resolved*Options` types use `Required<*Options>` to encode "all defaults filled in." Keep this separation — public types stay partial, internal types are fully resolved.

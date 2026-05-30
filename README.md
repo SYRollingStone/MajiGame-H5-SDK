@@ -4,7 +4,11 @@
 
 当前版本：`v0.1.0`（**第 1 期：安全防护模块**）
 
-完整开发计划见 [需求顺序.md](./需求顺序.md)。
+> 📘 **接入方（其他游戏项目 / AI agent）请直接看 [INTEGRATION.md](./INTEGRATION.md)** —— 完整 API、配置、CDN URL、Recipes、限制都在那一个文件里。
+>
+> 📦 **要发新版本看 [RELEASING.md](./RELEASING.md)**。
+>
+> 🗺️ **看路线图和开发计划看 [需求顺序.md](./需求顺序.md)**。
 
 ---
 

@@ -21,12 +21,15 @@ npm run release -- 0.2.0
 
 ## 发版前 checklist
 
-发版前确认下面 4 条，少一条会被 release 脚本拒绝：
+发版前确认下面 5 条，少一条会出问题：
 
 - [ ] 当前在 `main` 分支：`git branch --show-current` → `main`
 - [ ] 工作区干净：`git status` → `nothing to commit`
 - [ ] 本地 main 和 origin/main 同步：`git fetch && git status` → `up to date`
 - [ ] 目标版本 tag 不存在：`git tag -l v0.2.0-src` → 空
+- [ ] **[INTEGRATION.md](INTEGRATION.md) 已和当前实现同步**（如果本次有公开 API、配置项、事件、模块状态变更）
+
+前 4 条会被 release 脚本自动校验。**第 5 条必须人工/AI 自己确认** —— 这是接入方的"产品说明书"，落后会让接入方踩坑。
 
 ---
 
