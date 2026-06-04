@@ -8,4 +8,6 @@ export declare class ShortcutsBlocker {
     });
     start(): void;
     stop(): void;
+    private isInIframe;
+    private requestParentBlocking;
 }
