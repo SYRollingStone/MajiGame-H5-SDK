@@ -1,6 +1,6 @@
 {
   "name": "@majigame/h5-sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MajiGame H5 SDK - 自营 H5 小游戏站 SDK",
   "type": "module",
   "main": "./dist/maji-sdk.umd.cjs",
