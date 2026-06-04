@@ -106,6 +106,9 @@ antiDebug: { detectors: ['debugger', 'console'] }
 ### blockSelection
 默认 `false`。开启后会禁用文本选中、拖拽、复制（仍受 `allowSelector` 影响）。
 
+### iframe 嵌入下的跨窗口拦截（v0.2.0+）
+被 iframe 嵌入时按 F12 通常焦点在父窗口，SDK 内的 keydown 监听收不到。SDK 启动时检测到处于 iframe 会自动 `postMessage` 给父窗口请求协助拦截，父窗口需实现一段桥接监听器。**完整协议和参考实现见 [INTEGRATION.md 5.2](../INTEGRATION.md#52-securityshortcuts--快捷键--右键拦截)**。
+
 ---
 
 ## domainLock —— 域名 / 来源校验
